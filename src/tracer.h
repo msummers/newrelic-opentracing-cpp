@@ -31,7 +31,8 @@ namespace newrelic {
         // Agent.
         //Tracer(TracerOptions options, std::shared_ptr<Writer> &writer, std::shared_ptr<SampleProvider> sampler);
 
-        Tracer() = delete;
+        //Tracer() = delete;
+        Tracer();
 
         Tracer(const char *configuration);
 

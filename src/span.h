@@ -13,14 +13,14 @@ namespace newrelic {
     public:
         void ForeachBaggageItem(std::function<bool(const std::string &key, const std::string &value)> f) const override;
 
-        std::unique_ptr<opentracing::SpanContext> Clone() const noexcept override;
+        //std::unique_ptr<opentracing::SpanContext> Clone() const noexcept override;
     };
 
     class Span : public opentracing::Span, public std::enable_shared_from_this<Span> {
     public:
         ~Span() override = default;
-
-        void Log(opentracing::SystemTime timestamp, const std::vector<std::pair<opentracing::string_view, opentracing::Value>> &fields) noexcept override;
+        Span(opentracing::string_view operation_name, const opentracing::StartSpanOptions &options);
+        //void Log(opentracing::SystemTime timestamp, const std::vector<std::pair<opentracing::string_view, opentracing::Value>> &fields) noexcept override;
 
         void FinishWithOptions(const opentracing::FinishSpanOptions &finish_span_options) noexcept override;
 
@@ -34,7 +34,7 @@ namespace newrelic {
 
         void Log(std::initializer_list<std::pair<opentracing::string_view, opentracing::Value>> fields) noexcept override;
 
-        void Log(opentracing::SystemTime timestamp, std::initializer_list<std::pair<opentracing::string_view, opentracing::Value>> fields) noexcept override;
+        //void Log(opentracing::SystemTime timestamp, std::initializer_list<std::pair<opentracing::string_view, opentracing::Value>> fields) noexcept override;
 
         const opentracing::SpanContext &context() const noexcept override;
 

@@ -2,6 +2,7 @@
 #include <cstring>
 #include <exception>
 #include <opentracing/dynamic_load.h>
+#include <iostream>
 
 #include "tracer_factory.h"
 
@@ -23,7 +24,9 @@ namespace newrelic {
             return opentracing::incompatible_library_versions_error.value();
         }
 
+        std::cerr << "Instantiate TracerFactory" << std::endl;
         *tracer_factory = new TracerFactory{};
+        std::cerr << "Instantiated TracerFactory" << std::endl;
 
         return 0;
     } catch (const std::bad_alloc &) {

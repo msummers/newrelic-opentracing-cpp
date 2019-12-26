@@ -10,6 +10,8 @@
 namespace newrelic {
     class TracerFactory : public opentracing::TracerFactory {
     public:
+        TracerFactory();
+
         opentracing::expected<std::shared_ptr<opentracing::Tracer>> MakeTracer(const char *configuration, std::string &error_message) const noexcept override;
     };
 }
