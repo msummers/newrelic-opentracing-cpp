@@ -6,6 +6,7 @@
 #define NR_OPENTRACING_CPP_TRACER_H
 
 #include <functional>
+#include "newrelic/opentracing.h"
 #include <random>
 #include <opentracing/tracer.h>
 #include <opentracing/expected/expected.hpp>
@@ -56,6 +57,8 @@ namespace newrelic {
         opentracing::expected<std::unique_ptr<opentracing::SpanContext>> Extract(const opentracing::HTTPHeadersReader &reader) const override;
 
         void Close() noexcept override;
+        newrelic_txn_t* txn;
+        newrelic_segment_t* seg;
 
     private:
 //        const TracerOptions opts_;
