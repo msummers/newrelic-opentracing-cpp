@@ -46,7 +46,7 @@ namespace newrelic {
 
     private:
         newrelic::Tracer *aTracer;
-        newrelic::SpanContext aSpanContext;
+        newrelic::SpanContext aSpanContext{};
     };
 }
 #endif //NR_OPENTRACING_CPP_SPAN_H

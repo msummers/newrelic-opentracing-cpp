@@ -10,9 +10,10 @@ namespace newrelic {
     void Span::FinishWithOptions(const opentracing::FinishSpanOptions &finish_span_options) noexcept {
         std::cerr << "Span::FinishWithOptions " << this << std::endl;
 
-        std::cerr << "Span::FinishWithOptions txn: " << &(aTracer-> txn) << this << std::endl;
-        std::cerr << "Span::FinishWithOptions seg: " << &(aTracer-> seg) << this << std::endl;
-        newrelic_end_segment(aTracer->txn, &(aTracer->seg));
+        std::cerr << "Span::FinishWithOptions txn: " << &(aTracer-> txn) << " " << this << std::endl;
+        std::cerr << "Span::FinishWithOptions seg: " << &(aTracer-> seg) << " " << this << std::endl;
+        auto segPtr = aTracer -> seg;
+        newrelic_end_segment(aTracer->txn, &segPtr);
         std::cerr << "Span::FinishWithOptions segment ended "  << std::endl;
         newrelic_end_transaction(&(aTracer->txn));
         std::cerr << "Span::FinishWithOptions transaction ended "  << std::endl;
