@@ -32,8 +32,8 @@ namespace newrelic {
         // Agent.
         //Tracer(TracerOptions options, std::shared_ptr<Writer> &writer, std::shared_ptr<SampleProvider> sampler);
 
-        //Tracer() = delete;
-        Tracer();
+        Tracer() = delete;
+        //Tracer();
 
         Tracer(const char *configuration);
 
@@ -57,8 +57,8 @@ namespace newrelic {
         opentracing::expected<std::unique_ptr<opentracing::SpanContext>> Extract(const opentracing::HTTPHeadersReader &reader) const override;
 
         void Close() noexcept override;
-        newrelic_txn_t* txn;
-        newrelic_segment_t* seg;
+        newrelic_txn_t* newrelicTxn;
+        //newrelic_segment_t* newrelicSegment;
 
     private:
 //        const TracerOptions opts_;

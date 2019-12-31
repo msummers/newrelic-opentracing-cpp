@@ -7,6 +7,7 @@
 
 #include <opentracing/span.h>
 #include "tracer.h"
+#include "newrelic/opentracing.h"
 
 namespace newrelic {
     class SpanContext : public opentracing::SpanContext, public std::enable_shared_from_this<SpanContext> {
@@ -15,6 +16,8 @@ namespace newrelic {
         // TODO #ifdef ABI v3
         //std::unique_ptr<opentracing::SpanContext> Clone() const noexcept override;
         // #endif
+        const static std::string ContextKey;
+        std::string ContextValue {"{}"};
     };
 
     class Span : public opentracing::Span, public std::enable_shared_from_this<Span> {
@@ -45,8 +48,10 @@ namespace newrelic {
         // #endif
 
     private:
-        newrelic::Tracer *aTracer;
-        newrelic::SpanContext aSpanContext{};
+        newrelic::Tracer* newrelicTracer;
+        newrelic::SpanContext newrelicSpanContext{};
+        newrelic_segment_t* newrelicSegment = nullptr;
+        const static std::string DummySpan;
     };
 }
 #endif //NR_OPENTRACING_CPP_SPAN_H
