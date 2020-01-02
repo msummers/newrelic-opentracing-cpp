@@ -4,6 +4,6 @@
 #include  <newrelic/libnewrelic.h>
 
 namespace newrelic {
-    extern newrelic_app_t* app ;
+    extern newrelic_app_t* newrelicApp ;
 }
 #endif

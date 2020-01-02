@@ -10,8 +10,12 @@
 namespace newrelic {
     class TracerFactory : public opentracing::TracerFactory {
     public:
+        // Source: OpenTracing API for C++
         TracerFactory();
 
+        virtual ~TracerFactory();
+
+        // Source: OpenTracing API for C++
         opentracing::expected<std::shared_ptr<opentracing::Tracer>> MakeTracer(const char *configuration, std::string &error_message) const noexcept override;
     };
 }

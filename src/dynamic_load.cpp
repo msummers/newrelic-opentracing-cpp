@@ -7,6 +7,7 @@
 #include "tracer_factory.h"
 
 namespace newrelic {
+    // Source: OpenTracing API for C++
     static int OpenTracingMakeTracerFactoryFunction(const char *opentracing_version, const char *opentracing_abi_version, const void **error_category, void *error_message, void **tracer_factory) try {
         if (opentracing_version == nullptr || opentracing_abi_version == nullptr || error_message == nullptr || error_category == nullptr || tracer_factory == nullptr) {
             fprintf(stderr, "`opentracing_version`, `opentracing_abi_version`, "
