@@ -2,22 +2,30 @@
 #include "span.h"
 
 namespace newrelic {
-    const  std::string Span::DummySpan{"dummySpan"};
-    const  std::string SpanContext::ContextKey{"newrelic"};
+    const std::string Span::DummySpan{"dummySpan"};
+    const std::string SpanContext::ContextKey{"newrelic"};
 
     Span::Span(const Tracer *tracer, const opentracing::string_view operation_name, const opentracing::StartSpanOptions &options) {
         std::cerr << "(" << this << ") Span::Span name: " << operation_name.data() << " options:" << &options.tags << std::endl;
-        newrelicTracer =  tracer;
+        newrelicTracer = tracer;
         if (DummySpan == operation_name.data()) {
-        }else{
-            newrelicTxn = newrelic_start_web_transaction(newrelicApp, operation_name.data());
+        } else {
+            this->newrelicSpanContext.span = this;
+            // TODO handle the proxy forward loop-around
+            // See: https://github.com/rnburn/zipkin-cpp-opentracing/blob/fee9468d6d1af86b0b67b97729674d2d356cbe80/zipkin_opentracing/src/opentracing.cc#L119
+            auto parentContext = findSpanContext(options.references);
+            if (parentContext != nullptr) {
+                std::cerr << "(" << this << ") Span::Span child span" << std::endl;
+                newrelicTxn = parentContext->span->newrelicTxn;
+                this->newrelicSpanContext.isRoot = false;
+            } else {
+                newrelicTxn = newrelic_start_web_transaction(newrelicApp, operation_name.data());
+                std::cerr << "(" << this << ") Span::Span root span" << std::endl;
+            }
             std::cerr << "(" << this << ") Span::Span newrelicTxn: " << newrelicTxn << std::endl;
 
-            std::string segmentName {operation_name.data()};
+            std::string segmentName{operation_name.data()};
             std::replace(segmentName.begin(), segmentName.end(), '/', ' ');
-//            if(segmentName == " " ){
-//                segmentName = "root";
-//            }
             newrelicSegment = newrelic_start_segment(newrelicTxn, segmentName.c_str(), "nginx");
             std::cerr << "(" << this << ") Span::Span newrelicSegment: " << newrelicSegment << " " << std::endl;
 
@@ -28,7 +36,7 @@ namespace newrelic {
         }
     }
 
-    Span::~Span(){
+    Span::~Span() {
         std::cerr << "(" << this << ") Span::~Span" << std::endl;
     }
 
@@ -41,8 +49,10 @@ namespace newrelic {
             newrelic_end_segment(newrelicTxn, &newrelicSegment);
         }
         std::cerr << "(" << this << ") Span::FinishWithOptions segment ended " << std::endl;
-        newrelic_end_transaction(&(newrelicTxn));
-        std::cerr << "(" << this << ") Span::FinishWithOptions transaction ended " << std::endl;
+        if(this->newrelicSpanContext.isRoot) {
+            newrelic_end_transaction(&(newrelicTxn));
+            std::cerr << "(" << this << ") Span::FinishWithOptions transaction ended " << std::endl;
+        }
     }
 
     void Span::SetOperationName(opentracing::string_view name) noexcept {

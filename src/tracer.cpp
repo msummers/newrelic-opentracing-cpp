@@ -8,9 +8,6 @@ namespace newrelic {
     }
 
     std::unique_ptr<opentracing::Span> Tracer::StartSpanWithOptions(opentracing::string_view operation_name, const opentracing::StartSpanOptions &options) const noexcept {
-        // TODO handle the proxy forward loop-around
-        // See: https://github.com/rnburn/zipkin-cpp-opentracing/blob/fee9468d6d1af86b0b67b97729674d2d356cbe80/zipkin_opentracing/src/opentracing.cc#L119
-        //options.references;
         auto span =  std::unique_ptr<newrelic::Span>(new Span(this, operation_name, options));
         std::cerr << "(" << this << ") Tracer::StartSpanWithOptions operation_name: " << operation_name << " options: " << &options << " span: " << &span << std::endl;
         return span;

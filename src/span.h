@@ -10,6 +10,8 @@
 #include "newrelic/opentracing.h"
 
 namespace newrelic {
+    class Span;
+
     class SpanContext : public opentracing::SpanContext, public std::enable_shared_from_this<SpanContext> {
     public:
         virtual ~SpanContext();
@@ -21,6 +23,8 @@ namespace newrelic {
         // #endif
         const static std::string ContextKey;
         std::string ContextValue {"{}"};
+        newrelic::Span* span;
+        bool isRoot {true};
     };
 
     class Span : public opentracing::Span, public std::enable_shared_from_this<Span> {
@@ -68,5 +72,14 @@ namespace newrelic {
         newrelic_segment_t* newrelicSegment = nullptr;
         const static std::string DummySpan;
     };
+
+    static const newrelic::SpanContext *findSpanContext(const std::vector<std::pair<opentracing::SpanReferenceType, const opentracing::SpanContext *>> &references) {
+        for (auto &reference : references) {
+            if (auto span_context = dynamic_cast<const newrelic::SpanContext *>(reference.second)) {
+                return span_context;
+            }
+        }
+        return nullptr;
+    }
 }
 #endif //NR_OPENTRACING_CPP_SPAN_H
