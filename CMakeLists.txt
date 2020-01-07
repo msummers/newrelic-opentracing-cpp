@@ -22,7 +22,8 @@ include(ExternalProject)
 ExternalProject_Add(newrelic-c-sdk
         INSTALL_DIR ${PROJECT_SOURCE_DIR}/deps
         #file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/deps/include/newrelic)
-        GIT_REPOSITORY git@github.com:newrelic/c-sdk.git
+        GIT_REPOSITORY https://github.com/newrelic/c-sdk.git
+        #GIT_REPOSITORY git@github.com:newrelic/c-sdk.git
         GIT_TAG v1.2.0
         CONFIGURE_COMMAND ""
         BUILD_IN_SOURCE true
@@ -57,5 +58,6 @@ add_dependencies(nr_opentracing newrelic-c-sdk opentracing-cpp)
 #file(GLOB_RECURSE ExternalLibs "deps/lib/libopentracing.so" "deps/lib/libnewrelic.a")
 set(ExternalLibs libopentracing libnewrelic)
 message(INFO " External libraries: ${ExternalLibs}")
+# TODO parameterize the absolute lib location
 target_link_libraries(nr_opentracing opentracing newrelic -L/home/mike/CLionProjects/nr-opentracing-cpp/deps/lib)
 

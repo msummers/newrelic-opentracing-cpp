@@ -17,13 +17,15 @@ New Relic C++ OpenTracing implementation for [Nginx OpenTracing](https://github.
 
 ### To do
 #### Near term
-- Move txn start to Span::Span
+- ~~Move txn start to Span::Span~~
 - Ensure no C-SDK memory leaks
 - Config via file
 - Logging ([spdlog](https://github.com/gabime/spdlog))
 - OpenTelemetry Context via config
 - Load test
+- Get context for parent span from `Tracer::Extract` if present
 #### Long term
+- Inject span id into logs
 - Unit tests
   - [doctest](https://github.com/onqtam/doctest)
   - [Google Test](https://github.com/google/googletest)

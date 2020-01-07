@@ -1,18 +1,21 @@
 #include <iostream>
 #include "span.h"
+#include "config.h"
 
 namespace newrelic {
     const std::string Span::DummySpan{"dummySpan"};
     const std::string SpanContext::ContextKey{"newrelic"};
 
     Span::Span(const Tracer *tracer, const opentracing::string_view operation_name, const opentracing::StartSpanOptions &options) {
-        std::cerr << "(" << this << ") Span::Span name: " << operation_name.data() << " options:" << &options.tags << std::endl;
+        std::cerr << "(" << this << ") Span::Span name: " << operation_name.data() << " options:" << options.tags.size() << std::endl;
         newrelicTracer = tracer;
         if (DummySpan == operation_name.data()) {
         } else {
+            for (auto p : options.tags) {
+                std::cerr << "(" << this << ") Span::Span name: " << operation_name.data() << " options key: " << p.first << " value: " << typeid(p.second).name() << std::endl;
+            }
             this->newrelicSpanContext.span = this;
-            // TODO handle the proxy forward loop-around
-            // See: https://github.com/rnburn/zipkin-cpp-opentracing/blob/fee9468d6d1af86b0b67b97729674d2d356cbe80/zipkin_opentracing/src/opentracing.cc#L119
+            // Root/non-root span
             auto parentContext = findSpanContext(options.references);
             if (parentContext != nullptr) {
                 std::cerr << "(" << this << ") Span::Span child span" << std::endl;
@@ -26,7 +29,7 @@ namespace newrelic {
 
             std::string segmentName{operation_name.data()};
             std::replace(segmentName.begin(), segmentName.end(), '/', ' ');
-            newrelicSegment = newrelic_start_segment(newrelicTxn, segmentName.c_str(), "nginx");
+            newrelicSegment = newrelic_start_segment(newrelicTxn, segmentName.c_str(), Config::getSegmentCategory().c_str());
             std::cerr << "(" << this << ") Span::Span newrelicSegment: " << newrelicSegment << " " << std::endl;
 
             auto payload = newrelic_create_distributed_trace_payload(newrelicTxn, newrelicSegment);
@@ -49,7 +52,7 @@ namespace newrelic {
             newrelic_end_segment(newrelicTxn, &newrelicSegment);
         }
         std::cerr << "(" << this << ") Span::FinishWithOptions segment ended " << std::endl;
-        if(this->newrelicSpanContext.isRoot) {
+        if (this->newrelicSpanContext.isRoot) {
             newrelic_end_transaction(&(newrelicTxn));
             std::cerr << "(" << this << ") Span::FinishWithOptions transaction ended " << std::endl;
         }
