@@ -7,12 +7,12 @@ New Relic C++ OpenTracing Tracer implementation for [Nginx OpenTracing](https://
 
 ### Installation
 1. Nginx must be built with `--with-compat` and the Nginx version must match the Nginx OpenTracing module version _exactly_
-  - Use `nginx -V` to determine the Nginx version and build settings
+   - Use `nginx -V` to determine the Nginx version and build settings
 2. If Nginx is built with `--with-compat` _and_ there is a [pre-built Nginx OpenTracing Release](https://github.com/opentracing-contrib/nginx-opentracing/releases) that matches the Nginx version _exactly_ download the module and go to Step 3
-  - If your version of Nginx is not built with `--with-compat` you either have to find one for your Linux distribution that is or [build Nginx from source](https://www.google.com/search?q=building+nginx+from+source&oq=building+nginx+from+source&aqs=chrome..69i57.4695j0j7&sourceid=chrome&ie=UTF-8) 
-  - If there is no pre-built Nginx OpenTracing Release that matches your Nginx version you have to [build your own Nginx OpenTracing module](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source)
+   - If your version of Nginx is not built with `--with-compat` you either have to find one for your Linux distribution that is or [build Nginx from source](https://www.google.com/search?q=building+nginx+from+source&oq=building+nginx+from+source&aqs=chrome..69i57.4695j0j7&sourceid=chrome&ie=UTF-8) 
+   - If there is no pre-built Nginx OpenTracing Release that matches your Nginx version you have to [build your own Nginx OpenTracing module](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source)
 3. Copy `ngx_http_opentracing_module.so` to the Nginx module directory
-  - On Ubuntu for instance, this is `/usr/lib/nginx/modules/`
+   - On Ubuntu for instance, this is `/usr/lib/nginx/modules/`
 4. [Download the latest version of the New Relic Nginx OpenTracing Tracer](https://github.com/msummers/newrelic-opentracing-cpp/releases) `libnr_opentracing.so`
 
 ### Configuration
