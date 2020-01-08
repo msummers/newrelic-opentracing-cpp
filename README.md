@@ -102,10 +102,10 @@ csdkLogLevel: NEWRELIC_LOG_INFO          # C-SDK log level (DEBUG | INFO | WARNI
 - Ensure no C-SDK memory leaks
 - Logging ([spdlog](https://github.com/gabime/spdlog))
 - Generate OpenTelemetry Context from config setting
-- Get context for parent span from `Tracer::Extract` if present
+- Get context for parent span from `Tracer::Extract` if present in the HTTP header
 #### Long term
 - Modify C SDK to allow setting Span as External after it is created
-  - Use this set Spans as External if `Tracer::Inject` is called
+  - Use this to set Span as External if `Tracer::Inject` is called
 - Inject span id into logs
 - Unit tests
   - [doctest](https://github.com/onqtam/doctest)
