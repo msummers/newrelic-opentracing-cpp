@@ -1,10 +1,6 @@
 ## nr-opentracing-cpp
 New Relic C++ OpenTracing Tracer implementation for [Nginx OpenTracing](https://github.com/opentracing-contrib/nginx-opentracing)
 
-### Notes
-- Nginx version must match the Nginx OpenTracing Release version _exactly_
-- [C++ OpenTracing Library](https://github.com/opentracing/opentracing-cpp) ABI version must match the Nginx OpenTracing implementation's version
-
 ### Installation
 1. Nginx must be built with `--with-compat` and the Nginx version must match the Nginx OpenTracing module version _exactly_
    - Use `nginx -V` to determine the Nginx version and build settings
@@ -92,6 +88,10 @@ csdkLogLevel: NEWRELIC_LOG_INFO          # C-SDK log level (DEBUG | INFO | WARNI
 - `cd .build`
 - `cmake ..`
 - `make`
+#### Build Notes
+- Nginx version must match the Nginx OpenTracing Release version _exactly_
+- [C++ OpenTracing Library](https://github.com/opentracing/opentracing-cpp) ABI version must match the Nginx OpenTracing implementation's version
+
 
 ### To do
 #### Near term
