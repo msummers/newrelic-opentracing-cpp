@@ -66,13 +66,18 @@ namespace newrelic {
         return Config::config[Config::LicenseKey];
     }
 
-    // TODO allow for # comment char
     void Config::init(const char *configuration) {
         std::cerr << "Config::init enter configuration string: " << configuration << std::endl;
         //std::fstream file(configuration);
         std::istringstream stream{configuration};
         std::string str;
         for (std::string line; std::getline(stream, line);) {
+            // Deal with comments
+            line = StringUtils::chomp(line, "#");
+            if(line == ""){
+                continue;
+            }
+
             auto words = StringUtils::split(line, ':');
             std::cerr << "Config::init loading key: " << words.front() << " value: <" << words.back() << ">" << std::endl;
             // Key is in the conf file
@@ -89,7 +94,7 @@ namespace newrelic {
     }
 
     bool Config::isExternal() {
-        if (Config::config[Config::IsExternalKey] == "true") {
+        if (StringUtils::toLower(Config::config[Config::IsExternalKey]) == "true") {
             return false;
         } else { return false; }
     }

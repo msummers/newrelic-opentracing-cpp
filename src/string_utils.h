@@ -63,6 +63,22 @@ namespace newrelic {
             return splittedString;
 
         }
+
+        static std::string toLower(std::string source) {
+            auto target{source};
+            std::transform(source.begin(), source.end(), target.begin(), ::tolower);
+            return target;
+        }
+
+        static std::string toUpper(std::string source) {
+            auto target{source};
+            std::transform(source.begin(), source.end(), target.begin(), ::toupper);
+            return target;
+        }
+
+        static std::string chomp(std::string source, std::string delim){
+            return split(source, delim).front();
+        }
     };
 }
 

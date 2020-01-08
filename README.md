@@ -5,9 +5,10 @@ New Relic C++ OpenTracing implementation for [Nginx OpenTracing](https://github.
 - Nginx version must match the Nginx OpenTracing Release version _exactly_
 - [C++ OpenTracing Library](https://github.com/opentracing/opentracing-cpp) ABI version must match the Nginx OpenTracing implementation's version
 
-### nginx configuration
-
-### New Relic configuration
+### Installation
+### Configuration
+#### nginx
+#### New Relic Tracer
 
 ### Build
 - `mkdir .build`
@@ -18,13 +19,16 @@ New Relic C++ OpenTracing implementation for [Nginx OpenTracing](https://github.
 ### To do
 #### Near term
 - ~~Move txn start to Span::Span~~
+- ~~Config via file~~
+- ~~Implement StringUtils::toLower and use it in Config::init~~
+- ~~Allow comments in newrelic.conf~~
 - Ensure no C-SDK memory leaks
-- Config via file
 - Logging ([spdlog](https://github.com/gabime/spdlog))
-- OpenTelemetry Context via config
-- Load test
+- Generate OpenTelemetry Context from config setting
 - Get context for parent span from `Tracer::Extract` if present
 #### Long term
+- Modify C SDK to allow setting Span as External after it is created
+  - Use this set Spans as External if `Tracer::Inject` is called
 - Inject span id into logs
 - Unit tests
   - [doctest](https://github.com/onqtam/doctest)
