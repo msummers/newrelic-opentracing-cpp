@@ -19,7 +19,6 @@ namespace newrelic {
         static newrelic_loglevel_t getCSDKLogLevel();
         static std::string getCSDKLogLocation();
         static std::string getSegmentCategory();
-        static bool isExternal();
     private:
         static std::map<std::string, std::string> config;
         static std::map<std::string, newrelic_loglevel_t> newrelicLogLevel;
@@ -27,7 +26,6 @@ namespace newrelic {
         static const std::string AppNameKey;
         static const std::string LogLevelKey;
         static const std::string SegmentCategoryKey;
-        static const std::string IsExternalKey;
         static const std::string CSDKLogLocationKey;
         static const std::string CSDKLogLevelKey;
     };

@@ -14,7 +14,6 @@ namespace newrelic {
     const std::string Config::AppNameKey{"applicationName"};
     const std::string Config::LogLevelKey{"logLevel"};
     const std::string Config::SegmentCategoryKey{"segmentCategory"};
-    const std::string Config::IsExternalKey{"addExternalTransactions"};
     const std::string Config::CSDKLogLocationKey{"csdkLogLocation"};
     const std::string Config::CSDKLogLevelKey{"csdkLogLevel"};
 
@@ -22,14 +21,13 @@ namespace newrelic {
                                                          {Config::AppNameKey,         ""},
                                                          {Config::LogLevelKey,        "INFO"},
                                                          {Config::SegmentCategoryKey, "nginx"},
-                                                         {Config::IsExternalKey,      "false"},
-                                                         {Config::CSDKLogLevelKey,    "NEWRELIC_LOG_INFO"},
+                                                         {Config::CSDKLogLevelKey,    "INFO"},
                                                          {Config::CSDKLogLocationKey, "./c_sdk.log"}};
 
-    std::map<std::string, newrelic_loglevel_t> Config::newrelicLogLevel = {{"NEWRELIC_LOG_INFO",    NEWRELIC_LOG_INFO},
-                                                                           {"NEWRELIC_LOG_DEBUG",   NEWRELIC_LOG_DEBUG},
-                                                                           {"NEWRELIC_LOG_ERROR",   NEWRELIC_LOG_ERROR},
-                                                                           {"NEWRELIC_LOG_WARNING", NEWRELIC_LOG_WARNING}};
+    std::map<std::string, newrelic_loglevel_t> Config::newrelicLogLevel = {{"INFO",    NEWRELIC_LOG_INFO},
+                                                                           {"DEBUG",   NEWRELIC_LOG_DEBUG},
+                                                                           {"ERROR",   NEWRELIC_LOG_ERROR},
+                                                                           {"WARNING", NEWRELIC_LOG_WARNING}};
 
     std::string Config::getSegmentCategory() {
         return Config::config[Config::SegmentCategoryKey];
@@ -63,6 +61,10 @@ namespace newrelic {
     }
 
     std::string Config::getLicense() {
+        if( Config::config[Config::LicenseKey] == ""){
+           std::cerr << "New Relic license key not configured! Terminating." << std::endl;
+            std::terminate();
+        }
         return Config::config[Config::LicenseKey];
     }
 
@@ -91,11 +93,5 @@ namespace newrelic {
             std::cerr << "Config::init loaded key: " << element.first << " value: <" << element.second << ">" << std::endl;
         }
         std::cerr << "Config::init exit" << std::endl;
-    }
-
-    bool Config::isExternal() {
-        if (StringUtils::toLower(Config::config[Config::IsExternalKey]) == "true") {
-            return false;
-        } else { return false; }
     }
 }
