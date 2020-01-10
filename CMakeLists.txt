@@ -24,7 +24,7 @@ ExternalProject_Add(newrelic-c-sdk
         #file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/deps/include/newrelic)
         GIT_REPOSITORY https://github.com/newrelic/c-sdk.git
         #GIT_REPOSITORY git@github.com:newrelic/c-sdk.git
-        GIT_TAG v1.2.0
+        GIT_TAG v1.3.0
         CONFIGURE_COMMAND ""
         BUILD_IN_SOURCE true
         BUILD_COMMAND pwd && make
@@ -41,6 +41,24 @@ ExternalProject_Add(opentracing-cpp
         -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
         )
 
+ExternalProject_Add(fmt
+        INSTALL_DIR ${PROJECT_SOURCE_DIR}/deps
+        GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+        GIT_TAG 6.1.2
+        CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+        -DBUILD_SHARED_LIBS:BOOL=ON
+        )
+
+#ExternalProject_Add(spdlog
+#        INSTALL_DIR ${PROJECT_SOURCE_DIR}/deps
+#        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+#        GIT_TAG v1.4.2
+#        CMAKE_ARGS
+#        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+#        -DSPDLOG_BUILD_SHARED:BOOL=ON
+#        )
+
 # Dropped this from add_dependencies as it takes too much time every make
 #ExternalProject_Add(nlohmann_json
 #        INSTALL_DIR ${PROJECT_SOURCE_DIR}/deps
@@ -53,11 +71,14 @@ ExternalProject_Add(opentracing-cpp
 # Source
 file(GLOB_RECURSE NR_OPENTRACING_SOURCES "src/*.cpp")
 add_library(nr_opentracing SHARED ${NR_OPENTRACING_SOURCES} )
-add_dependencies(nr_opentracing newrelic-c-sdk opentracing-cpp)
 
+# Dependencies
+add_dependencies(nr_opentracing newrelic-c-sdk opentracing-cpp fmt)
+
+# Link
 #file(GLOB_RECURSE ExternalLibs "deps/lib/libopentracing.so" "deps/lib/libnewrelic.a")
-set(ExternalLibs libopentracing libnewrelic)
+set(ExternalLibs libopentracing libnewrelic libfmt)
 message(INFO " External libraries: ${ExternalLibs}")
 # TODO parameterize the absolute lib location
-target_link_libraries(nr_opentracing opentracing newrelic -L/home/mike/CLionProjects/nr-opentracing-cpp/deps/lib)
+target_link_libraries(nr_opentracing opentracing newrelic /home/mike/CLionProjects/nr-opentracing-cpp/deps/lib/libfmt.so -L/home/mike/CLionProjects/nr-opentracing-cpp/deps/lib)
 

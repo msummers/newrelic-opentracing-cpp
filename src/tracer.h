@@ -10,6 +10,7 @@
 #include <random>
 #include <opentracing/tracer.h>
 #include <opentracing/expected/expected.hpp>
+#include <mutex>
 
 
 namespace newrelic {
@@ -49,6 +50,14 @@ namespace newrelic {
 
         // Source: OpenTracing API for C++
         void Close() noexcept override;
+
+//        std::string getPayload() const;
+//        std::string getAndClearPayload() const;
+
+    private:
+//        std::string payload {""};
+//        void setPayload(std::string value);
+//        std::mutex payloadMutex;
     };
 }
 #endif //NR_OPENTRACING_CPP_TRACER_H

@@ -8,13 +8,14 @@
 #include <opentracing/span.h>
 #include "tracer.h"
 #include "newrelic/opentracing.h"
+#include "log.h"
 
 namespace newrelic {
     class Span;
 
     class SpanContext : public opentracing::SpanContext, public std::enable_shared_from_this<SpanContext> {
     public:
-        virtual ~SpanContext();
+        ~SpanContext() override;
 
         // Source: OpenTracing API for C++
         void ForeachBaggageItem(std::function<bool(const std::string &key, const std::string &value)> f) const override;
@@ -24,13 +25,14 @@ namespace newrelic {
         const static std::string ContextKey;
         std::string ContextValue {"{}"};
         newrelic::Span* span;
-        bool isRoot {true};
+        bool isRoot {false};
+        std::string payload {""};
     };
 
     class Span : public opentracing::Span, public std::enable_shared_from_this<Span> {
     public:
         // Source: OpenTracing API for C++
-        ~Span();
+        ~Span() override;
 
         Span(const Tracer *tracer, opentracing::string_view operation_name, const opentracing::StartSpanOptions &options);
 
@@ -73,8 +75,10 @@ namespace newrelic {
         const static std::string DummySpan;
     };
 
+    // TODO Get rid of this, it doesn't work when we Extract an inbound context
     static const newrelic::SpanContext *findSpanContext(const std::vector<std::pair<opentracing::SpanReferenceType, const opentracing::SpanContext *>> &references) {
         for (auto &reference : references) {
+            Log::debug("findSpanContext: first: {} second: {}", typeid(reference.first).name(), typeid(reference.second).name());
             if (auto span_context = dynamic_cast<const newrelic::SpanContext *>(reference.second)) {
                 return span_context;
             }

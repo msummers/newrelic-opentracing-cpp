@@ -7,94 +7,100 @@ namespace newrelic {
     const std::string SpanContext::ContextKey{"newrelic"};
 
     Span::Span(const Tracer *tracer, const opentracing::string_view operation_name, const opentracing::StartSpanOptions &options) {
-        std::cerr << "(" << this << ") Span::Span name: " << operation_name.data() << " options:" << options.tags.size() << std::endl;
+        Log::trace("({}) Span::Span name: {}", (void *)this, operation_name.data());
         newrelicTracer = tracer;
         if (DummySpan == operation_name.data()) {
         } else {
             for (auto p : options.tags) {
-                std::cerr << "(" << this << ") Span::Span name: " << operation_name.data() << " options key: " << p.first << " value: " << typeid(p.second).name() << std::endl;
+                Log::debug("({}) Span::Span options key: {} value: {}", (void *)this, p.first.data(), typeid(p.second).name());
             }
             this->newrelicSpanContext.span = this;
             // Root/non-root span
+            Log::debug("({}) Span::Span options.references.size(): {}", (void*)this, options.references.size());
             auto parentContext = findSpanContext(options.references);
             if (parentContext != nullptr) {
-                std::cerr << "(" << this << ") Span::Span child span" << std::endl;
+                Log::debug("({}) Span::Span is child span", (void *)this);
                 newrelicTxn = parentContext->span->newrelicTxn;
                 this->newrelicSpanContext.isRoot = false;
             } else {
+                Log::debug("({}) Span::Span is root span", (void *)this);
                 newrelicTxn = newrelic_start_web_transaction(newrelicApp, operation_name.data());
-                std::cerr << "(" << this << ") Span::Span root span" << std::endl;
+                //Add inbound payload if any
+                //auto payload = tracer->getAndClearPayload();
+                if (payload != ""){
+                    newrelic_accept_distributed_trace_payload(newrelicTxn, payload.c_str(), NEWRELIC_TRANSPORT_TYPE_HTTP );
+                    Log::debug("({}) Span::Span inbound payload: {}", (void *)this, payload);
+                }
             }
-            std::cerr << "(" << this << ") Span::Span newrelicTxn: " << newrelicTxn << std::endl;
+            Log::debug("({}) Span::Span newrelicTxn: {}", (void *)this, (void *)newrelicTxn);
 
             std::string segmentName{operation_name.data()};
             std::replace(segmentName.begin(), segmentName.end(), '/', ' ');
             newrelicSegment = newrelic_start_segment(newrelicTxn, segmentName.c_str(), Config::getSegmentCategory().c_str());
-            std::cerr << "(" << this << ") Span::Span newrelicSegment: " << newrelicSegment << " " << std::endl;
+            Log::debug("({}) Span::Span newrelicSegment: {}", (void *)this, (void *)newrelicSegment);
 
             auto payload = newrelic_create_distributed_trace_payload(newrelicTxn, newrelicSegment);
             this->newrelicSpanContext.ContextValue = payload;
             free(payload);
-            std::cerr << "(" << this << ") Span::Span contextValue: " << this->newrelicSpanContext.ContextValue << " " << std::endl;
+            Log::debug("({}) Span::Span contextValue: {}", (void *)this, this->newrelicSpanContext.ContextValue);
         }
     }
 
     Span::~Span() {
-        std::cerr << "(" << this << ") Span::~Span" << std::endl;
+        Log::trace("({}) Span::~Span", (void *)this);
     }
 
     void Span::FinishWithOptions(const opentracing::FinishSpanOptions &finish_span_options) noexcept {
-        std::cerr << "(" << this << ") Span::FinishWithOptions " << std::endl;
+        Log::trace("({}) Span::FinishWithOptions", (void *)this);
 
-        std::cerr << "(" << this << ") Span::FinishWithOptions newrelicTxn: " << &(newrelicTxn) << " " << std::endl;
+        Log::debug("({}) Span::FinishWithOptions", (void *)this);
         if (newrelicSegment != nullptr) {
-            std::cerr << "(" << this << ") Span::FinishWithOptions newrelicSegment: " << &(newrelicSegment) << " " << std::endl;
+            Log::debug("({}) Span::FinishWithOptions ending segment: {}", (void *)this, (void*)newrelicSegment);
             newrelic_end_segment(newrelicTxn, &newrelicSegment);
         }
-        std::cerr << "(" << this << ") Span::FinishWithOptions segment ended " << std::endl;
         if (this->newrelicSpanContext.isRoot) {
+            Log::debug("({}) Span::FinishWithOptions ending transaction: {}", (void *)this, (void*)newrelicTxn);
             newrelic_end_transaction(&(newrelicTxn));
-            std::cerr << "(" << this << ") Span::FinishWithOptions transaction ended " << std::endl;
         }
     }
 
     void Span::SetOperationName(opentracing::string_view name) noexcept {
-        std::cerr << "(" << this << ") Span::SetOperationName name: " << name << " " << std::endl;
+        Log::trace("({}) Span::SetOperationName name: {}", (void *)this, name.data());
     }
 
     void Span::SetTag(opentracing::string_view key, const opentracing::Value &value) noexcept {
-        std::cerr << "(" << this << ") Span::SetTag key: " << key << " value: " << &value << " " << std::endl;
+        Log::trace("({}) Span::SetTag key: {}", (void *)this, key.data());
     }
 
     void Span::SetBaggageItem(opentracing::string_view restricted_key, opentracing::string_view value) noexcept {
-        std::cerr << "(" << this << ") Span::SetBaggageItem " << std::endl;
+        Log::trace("({}) Span::SetBaggageItem key: {}", (void *)this, restricted_key.data());
     }
 
     std::string Span::BaggageItem(opentracing::string_view restricted_key) const noexcept {
-        std::cerr << "(" << this << ") Span::BaggageItem " << std::endl;
+        Log::trace("({}) Span::BaggageItem key: {}", (void *)this, restricted_key.data());
         return std::string();
     }
 
     void Span::Log(std::initializer_list<std::pair<opentracing::string_view, opentracing::Value>> fields) noexcept {
-        std::cerr << "(" << this << ") Span::Log " << std::endl;
+        Log::trace("({}) Span::Log", (void *)this);
     }
 
     const opentracing::SpanContext &Span::context() const noexcept {
-        std::cerr << "(" << this << ") Span::context " << &newrelicSpanContext << std::endl;
+        Log::trace("({}) Span::context", (void *)this);
         return newrelicSpanContext;
     }
 
     const opentracing::Tracer &Span::tracer() const noexcept {
-        std::cerr << "(" << this << ") Span::tracer " << std::endl;
+        Log::trace("({}) Span::tracer", (void *)this);
         return *newrelicTracer;
     }
 
     void SpanContext::ForeachBaggageItem(std::function<bool(const std::string &key, const std::string &value)> f) const {
-        std::cerr << "(" << this << ") Span::ForeachBaggageItem " << std::endl;
+        Log::trace("({}) SpanContext::ForeachBaggageItem", (void *)this);
     }
 
     SpanContext::~SpanContext() {
-        std::cerr << "(" << this << ") SpanContext::~SpanContext " << std::endl;
+        Log::trace("({}) SpanContext::~SpanContext", (void *)this);
     }
 
     // TODO  #ifdef ABI v3

@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <newrelic/libnewrelic.h>
+#include "log.h"
 
 namespace newrelic {
     class Config {
@@ -15,13 +16,14 @@ namespace newrelic {
         static void init(const char* configuration);
         static std::string getLicense();
         static std::string getApplicationName();
-        static std::string getLogLevel();
+        static Log::LogLevels getLogLevel();
         static newrelic_loglevel_t getCSDKLogLevel();
         static std::string getCSDKLogLocation();
         static std::string getSegmentCategory();
     private:
         static std::map<std::string, std::string> config;
-        static std::map<std::string, newrelic_loglevel_t> newrelicLogLevel;
+        static std::map<std::string, Log::LogLevels> logLevels;
+        static std::map<std::string, newrelic_loglevel_t> newrelicLogLevels;
         static const std::string LicenseKey;
         static const std::string AppNameKey;
         static const std::string LogLevelKey;

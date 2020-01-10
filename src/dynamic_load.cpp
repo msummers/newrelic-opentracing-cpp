@@ -25,10 +25,7 @@ namespace newrelic {
             return opentracing::incompatible_library_versions_error.value();
         }
 
-        std::cerr << "Instantiate TracerFactory" << std::endl;
         *tracer_factory = new TracerFactory{};
-        std::cerr << "Instantiated TracerFactory" << std::endl;
-
         return 0;
     } catch (const std::bad_alloc &) {
         *error_category = static_cast<const void *>(&std::generic_category());

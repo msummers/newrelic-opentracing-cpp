@@ -80,6 +80,7 @@ segmentCategory: nginx                   # Default: nginx
 csdkLogLocation: ./c_sdk.log             # C-SDK log location. Default: ./c_sdk.log
 csdkLogLevel: NEWRELIC_LOG_INFO          # C-SDK log level (DEBUG | INFO | WARNING | ERROR). Default: INFO
 ```
+### Trouble shooting
 
 ### Build the Tracer from Source
 - `git clone`
@@ -97,10 +98,11 @@ csdkLogLevel: NEWRELIC_LOG_INFO          # C-SDK log level (DEBUG | INFO | WARNI
 #### Near term
 - ~~Move txn start to Span::Span~~
 - ~~Config via file~~
+  - ~~Ignore case~~
 - ~~Implement StringUtils::toLower and use it in Config::init~~
 - ~~Allow comments in newrelic.conf~~
 - Ensure no C-SDK memory leaks
-- Logging ([spdlog](https://github.com/gabime/spdlog))
+- ~~Logging~~
 - Generate OpenTelemetry Context from config setting
 - Get context for parent span from `Tracer::Extract` if present in the HTTP header
 #### Long term

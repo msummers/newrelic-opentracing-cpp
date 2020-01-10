@@ -2,7 +2,6 @@
 // Created by mike on 1/6/20.
 //
 
-#include <fstream>
 #include "config.h"
 #include "string_utils.h"
 #include <unistd.h>
@@ -19,26 +18,35 @@ namespace newrelic {
 
     std::map<std::string, std::string> Config::config = {{Config::LicenseKey,         ""},
                                                          {Config::AppNameKey,         ""},
-                                                         {Config::LogLevelKey,        "INFO"},
+                                                         {Config::LogLevelKey,        "ALL"},
                                                          {Config::SegmentCategoryKey, "nginx"},
                                                          {Config::CSDKLogLevelKey,    "INFO"},
                                                          {Config::CSDKLogLocationKey, "./c_sdk.log"}};
 
-    std::map<std::string, newrelic_loglevel_t> Config::newrelicLogLevel = {{"INFO",    NEWRELIC_LOG_INFO},
-                                                                           {"DEBUG",   NEWRELIC_LOG_DEBUG},
-                                                                           {"ERROR",   NEWRELIC_LOG_ERROR},
-                                                                           {"WARNING", NEWRELIC_LOG_WARNING}};
+    std::map<std::string, newrelic_loglevel_t> Config::newrelicLogLevels = {{"INFO",  NEWRELIC_LOG_INFO},
+                                                                            {"DEBUG", NEWRELIC_LOG_DEBUG},
+                                                                            {"ERROR", NEWRELIC_LOG_ERROR},
+                                                                            {"WARN",  NEWRELIC_LOG_WARNING}};
+
+    std::map<std::string, Log::LogLevels> Config::logLevels = {{"TRACE",    Log::LogLevels::TRACE},
+                                                               {"DEBUG",    Log::LogLevels::DEBUG},
+                                                               {"INFO",     Log::LogLevels::INFO},
+                                                               {"WARN",     Log::LogLevels::WARN},
+                                                               {"ERROR",    Log::LogLevels::ERROR},
+                                                               {"CRITICAL", Log::LogLevels::FATAL},
+                                                               {"ALL",      Log::LogLevels::ALL},
+                                                               {"OFF",      Log::LogLevels::OFF}};
+
+    Log::LogLevels Config::getLogLevel() {
+        return Config::logLevels[StringUtils::toUpper(Config::config[Config::LogLevelKey])];
+    }
 
     std::string Config::getSegmentCategory() {
         return Config::config[Config::SegmentCategoryKey];
     }
 
-    std::string Config::getLogLevel() {
-        return Config::config[Config::LogLevelKey];
-    }
-
     newrelic_loglevel_t Config::getCSDKLogLevel() {
-        return Config::newrelicLogLevel[Config::config[Config::CSDKLogLevelKey]];
+        return Config::newrelicLogLevels[StringUtils::toUpper(Config::config[Config::CSDKLogLevelKey])];
     }
 
     std::string Config::getCSDKLogLocation() {
@@ -61,37 +69,35 @@ namespace newrelic {
     }
 
     std::string Config::getLicense() {
-        if( Config::config[Config::LicenseKey] == ""){
-           std::cerr << "New Relic license key not configured! Terminating." << std::endl;
-            std::terminate();
+        if (Config::config[Config::LicenseKey] == "") {
+            Log::fatal("Config::getLicense New Relic license key not configured");
         }
         return Config::config[Config::LicenseKey];
     }
 
     void Config::init(const char *configuration) {
-        std::cerr << "Config::init enter configuration string: " << configuration << std::endl;
-        //std::fstream file(configuration);
+        Log::trace("Config::init enter configuration string: {}", configuration);
         std::istringstream stream{configuration};
         std::string str;
         for (std::string line; std::getline(stream, line);) {
             // Deal with comments
             line = StringUtils::chomp(line, "#");
-            if(line == ""){
+            if (line == "") {
                 continue;
             }
 
             auto words = StringUtils::split(line, ':');
-            std::cerr << "Config::init loading key: " << words.front() << " value: <" << words.back() << ">" << std::endl;
+            Log::debug("Config::init loading key: {} value: {}", words.front(), words.back());
             // Key is in the conf file
             if (Config::config.count(words.front()) > 0) {
                 Config::config[words.front()] = StringUtils::trim(words.back());
             } else {
-                std::cerr << "Config::init unknown key: " << words.front() << std::endl;
+                Log::warn("Config::init unknown key: {}", words.front());
             }
         }
         for (std::pair<std::string, std::string> element : Config::config) {
-            std::cerr << "Config::init loaded key: " << element.first << " value: <" << element.second << ">" << std::endl;
+            Log::debug("Config::init loaded key: {}  value: <{}>", element.first, element.second);
         }
-        std::cerr << "Config::init exit" << std::endl;
+        Log::trace("Config::init exit");
     }
 }
