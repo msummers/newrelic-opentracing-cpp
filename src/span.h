@@ -15,18 +15,18 @@ namespace newrelic {
 
     class SpanContext : public opentracing::SpanContext, public std::enable_shared_from_this<SpanContext> {
     public:
-        ~SpanContext() override;
-
         // Source: OpenTracing API for C++
         void ForeachBaggageItem(std::function<bool(const std::string &key, const std::string &value)> f) const override;
+
         // TODO #ifdef ABI v3
         //std::unique_ptr<opentracing::SpanContext> Clone() const noexcept override;
         // #endif
         const static std::string ContextKey;
-        std::string ContextValue {"{}"};
-        newrelic::Span* span;
-        bool isRoot {false};
-        std::string payload {""};
+        std::string ContextValue{"{}"};
+        newrelic::Span *span{};
+        bool isRoot{false};
+        bool isUsed{false};
+        std::string payload{""};
     };
 
     class Span : public opentracing::Span, public std::enable_shared_from_this<Span> {
@@ -68,21 +68,25 @@ namespace newrelic {
         // #endif
 
     private:
-        newrelic_txn_t* newrelicTxn;
+        newrelic_txn_t *newrelicTxn;
         const Tracer *newrelicTracer;
         newrelic::SpanContext newrelicSpanContext{};
-        newrelic_segment_t* newrelicSegment = nullptr;
+        newrelic_segment_t *newrelicSegment = nullptr;
         const static std::string DummySpan;
     };
 
-    // TODO Get rid of this, it doesn't work when we Extract an inbound context
-    static const newrelic::SpanContext *findSpanContext(const std::vector<std::pair<opentracing::SpanReferenceType, const opentracing::SpanContext *>> &references) {
+    static newrelic::SpanContext *findSpanContext(const std::vector<std::pair<opentracing::SpanReferenceType, const opentracing::SpanContext *>> &references) {
         for (auto &reference : references) {
             Log::debug("findSpanContext: first: {} second: {}", typeid(reference.first).name(), typeid(reference.second).name());
-            if (auto span_context = dynamic_cast<const newrelic::SpanContext *>(reference.second)) {
-                return span_context;
+            try {
+                Log::debug("findSpanContext: exit with found context");
+                return dynamic_cast<SpanContext *>(const_cast<opentracing::SpanContext*>(reference.second));
+            } catch (...) {
+                auto e = std::current_exception();
+                Log::error("Exception {} casting type {} to newrelic::SpanContext", e.__cxa_exception_type()->name(), typeid(reference.second).name());
             }
         }
+        Log::debug("findSpanContext: exit with nullptr");
         return nullptr;
     }
 }
