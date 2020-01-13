@@ -26,7 +26,7 @@ namespace newrelic {
                 newrelicTxn = newrelic_start_web_transaction(newrelicApp, operation_name.data());
                 //Add inbound payload if any
                 if (!this->newrelicSpanContext.payload.empty()) {
-                    newrelic_accept_distributed_trace_payload(newrelicTxn, this->newrelicSpanContext.payload.c_str(), NEWRELIC_TRANSPORT_TYPE_HTTP);
+                    newrelic_accept_distributed_trace_payload_httpsafe(newrelicTxn, this->newrelicSpanContext.payload.c_str(), NEWRELIC_TRANSPORT_TYPE_HTTP);
                     Log::debug("({}) Span::Span inbound payload: {}", (void *) this, this->newrelicSpanContext.payload);
                 }
             } else if (referenceContext->isRoot && referenceContext->isUsed) {

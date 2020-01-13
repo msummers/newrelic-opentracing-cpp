@@ -52,10 +52,12 @@ namespace newrelic {
         auto context = newrelic::SpanContext();
         context.isRoot = true;
         reader.ForeachKey([&](opentracing::string_view key, opentracing::string_view value) -> opentracing::expected<void> {
-            Log::debug("({}) Tracer::Extract(HTTPHeaderReader) key: {} value: {}", (const void *) this, key.data(), value.data());
+            std::string k = key;
+            std::string v = value;
+            Log::debug("({}) Tracer::Extract(HTTPHeaderReader) key: {} value: {}", (const void *) this, k, v);
             // We may, or may not, get an inbound Payload from here. That is, we're "in the middle"
-            if (StringUtils::toLower(key.data()) == "newrelic") {
-                context.payload = value;
+            if (StringUtils::toLower(k) == "newrelic") {
+                context.payload = v;
             } else {
                 //TODO add the headers to the span's tags
             }
