@@ -7,9 +7,12 @@ namespace newrelic {
     const std::string SpanContext::ContextKey{"newrelic"};
 
     Span::Span(const Tracer *tracer, const opentracing::string_view operation_name, const opentracing::StartSpanOptions &options) {
-        Log::trace("({}) Span::Span name: {}", (void *) this, operation_name.data());
+        // operation_name.data is NOT a null terminated C string, this makes it safe
+        std::string operationName = operation_name;
+        Log::trace("({}) Span::Span enter. operationName: {}", (void *) this, operationName);
         newrelicTracer = tracer;
-        if (DummySpan == operation_name.data()) {
+        // Skip if we're the startup dummy span
+        if (DummySpan == operationName) {
         } else {
             for (const auto &p : options.tags) {
                 Log::debug("({}) Span::Span options key: {} value: {}", (void *) this, p.first.data(), typeid(p.second).name());
@@ -17,18 +20,20 @@ namespace newrelic {
             // Root/non-root span
             Log::debug("({}) Span::Span options.references.size(): {}", (void *) this, options.references.size());
             auto referenceContext = findSpanContext(options.references);
+            // Process Root Span
             if(referenceContext->isRoot && !referenceContext->isUsed){
                 referenceContext->isUsed = true;
                 // DIRE WARNING don't set anything in the SpanContext until *AFTER* the assignment!
                 this->newrelicSpanContext = *referenceContext;
                 this->newrelicSpanContext.span = this;
                 Log::debug("({}) Span::Span is root span", (void *) this);
-                newrelicTxn = newrelic_start_web_transaction(newrelicApp, operation_name.data());
+                newrelicTxn = newrelic_start_web_transaction(newrelicApp, operationName.c_str());
                 //Add inbound payload if any
                 if (!this->newrelicSpanContext.payload.empty()) {
                     newrelic_accept_distributed_trace_payload_httpsafe(newrelicTxn, this->newrelicSpanContext.payload.c_str(), NEWRELIC_TRANSPORT_TYPE_HTTP);
                     Log::debug("({}) Span::Span inbound payload: {}", (void *) this, this->newrelicSpanContext.payload);
                 }
+                // Process child spans
             } else if (referenceContext->isRoot && referenceContext->isUsed) {
                 this->newrelicSpanContext.span = this;
                 Log::debug("({}) Span::Span is child span", (void *) this);
@@ -38,11 +43,12 @@ namespace newrelic {
             }
             Log::debug("({}) Span::Span newrelicTxn: {}", (void *) this, (void *) newrelicTxn);
 
-            std::string segmentName{operation_name.data()};
+            std::string segmentName{operationName};
             std::replace(segmentName.begin(), segmentName.end(), '/', ' ');
             newrelicSegment = newrelic_start_segment(newrelicTxn, segmentName.c_str(), Config::getSegmentCategory().c_str());
             Log::debug("({}) Span::Span newrelicSegment: {}", (void *) this, (void *) newrelicSegment);
 
+            // TODO move defer payload generation to Tracer::Inject?
             auto payload = newrelic_create_distributed_trace_payload(newrelicTxn, newrelicSegment);
             this->newrelicSpanContext.ContextValue = payload;
             free(payload);

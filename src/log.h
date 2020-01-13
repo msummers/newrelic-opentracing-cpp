@@ -17,6 +17,8 @@ namespace newrelic {
 
         static void setLevel(LogLevels logLevel);
 
+        // Templated definitions go in the header to give the compiler the info it needs.
+
         template<typename S, typename... Args>
         static void trace(const S &format, Args &&... args) {
             try {
