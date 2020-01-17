@@ -22,9 +22,10 @@ include(ExternalProject)
 ExternalProject_Add(newrelic-c-sdk
         INSTALL_DIR ${PROJECT_SOURCE_DIR}/deps
         #file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/deps/include/newrelic)
-        GIT_REPOSITORY https://github.com/newrelic/c-sdk.git
-        #GIT_REPOSITORY git@github.com:newrelic/c-sdk.git
-        GIT_TAG v1.3.0
+        #GIT_REPOSITORY https://github.com/newrelic/c-sdk.git
+        #GIT_TAG v1.3.0
+        GIT_REPOSITORY https://github.com/msummers-nr/c-sdk.git
+        GIT_TAG "set_segment_external"
         CONFIGURE_COMMAND ""
         BUILD_IN_SOURCE true
         BUILD_COMMAND pwd && make

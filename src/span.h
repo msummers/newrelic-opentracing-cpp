@@ -6,6 +6,7 @@
 #define NR_OPENTRACING_CPP_SPAN_H
 
 #include <opentracing/span.h>
+#include <map>
 #include "tracer.h"
 #include "newrelic/opentracing.h"
 #include "log.h"
@@ -67,12 +68,13 @@ namespace newrelic {
         //void Log(opentracing::SystemTime timestamp, std::initializer_list<std::pair<opentracing::string_view, opentracing::Value>> fields) noexcept override;
         // #endif
 
-    private:
         newrelic_txn_t *newrelicTxn;
+        newrelic_segment_t *newrelicSegment = nullptr;
+    private:
         const Tracer *newrelicTracer;
         newrelic::SpanContext newrelicSpanContext{};
-        newrelic_segment_t *newrelicSegment = nullptr;
         const static std::string DummySpan;
+        std::map<std::string, std::string> tags;
     };
 
     static newrelic::SpanContext *findSpanContext(const std::vector<std::pair<opentracing::SpanReferenceType, const opentracing::SpanContext *>> &references) {

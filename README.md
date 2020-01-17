@@ -105,6 +105,9 @@ csdkLogLevel: NEWRELIC_LOG_INFO          # C-SDK log level (DEBUG | INFO | WARNI
 - ~~Logging~~
 - Generate OpenTelemetry Context from config setting
 - ~~Get context for parent span from `Tracer::Extract` if present in the HTTP header~~
+- ~~Add Tags to Transaction~~
+- ~~Set Transaction as External~~
+- ~~Regex filter Transaction names~~
 #### Long term
 - Modify C SDK to allow setting Span as External after it is created
   - Use this to set Span as External if `Tracer::Inject` is called

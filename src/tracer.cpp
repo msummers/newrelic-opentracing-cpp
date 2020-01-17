@@ -29,10 +29,9 @@ namespace newrelic {
 
     // On start-up this method is called with a dummy span whose context must return a context with all of the keys we use!
     opentracing::expected<void> Tracer::Inject(const opentracing::SpanContext &sc, const opentracing::HTTPHeadersWriter &writer) const {
-        // TODO Convert the Span associated with the Context to External. This requires a C-SDK change.
         Log::trace("({}) Tracer::Inject(HTTPHeaderWriter) spanContext: {}", (const void *) this, (const void *) &sc);
         auto &nr_sc = (SpanContext &) sc;
-        return writer.Set(newrelic::SpanContext::ContextKey, nr_sc.ContextValue);
+         return writer.Set(newrelic::SpanContext::ContextKey, nr_sc.ContextValue);
     }
 
     opentracing::expected<std::unique_ptr<opentracing::SpanContext>> Tracer::Extract(std::istream &reader) const {

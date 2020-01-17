@@ -21,9 +21,9 @@ namespace newrelic {
             Log::fatal("({}) TracerFactory::MakeTracer Error configuring New Relic daemon logging", (const void*)this);
         }
 
-        if (!newrelic_init(NULL, 0)) {
-            Log::fatal("({}) TracerFactory::MakeTracer Error connecting to New Relic daemon", (const void *)this);
-        }
+//        if (!newrelic_init(NULL, 0)) {
+//            Log::fatal("({}) TracerFactory::MakeTracer Error connecting to New Relic daemon", (const void *)this);
+//        }
 
         /* Wait up to 10 seconds for the SDK to connect to the daemon */
         newrelicApp = newrelic_create_app(config, 10000);

@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <newrelic/libnewrelic.h>
 #include <iostream>
+#include <fstream>
 
 namespace newrelic {
     const std::string Config::LicenseKey{"newrelicLicense"};
@@ -15,13 +16,15 @@ namespace newrelic {
     const std::string Config::SegmentCategoryKey{"segmentCategory"};
     const std::string Config::CSDKLogLocationKey{"csdkLogLocation"};
     const std::string Config::CSDKLogLevelKey{"csdkLogLevel"};
+    const std::string Config::TransactionFilterFileKey{"transactionFilterFile"};
 
-    std::map<std::string, std::string> Config::config = {{Config::LicenseKey,         ""},
-                                                         {Config::AppNameKey,         ""},
-                                                         {Config::LogLevelKey,        "ALL"},
-                                                         {Config::SegmentCategoryKey, "nginx"},
-                                                         {Config::CSDKLogLevelKey,    "INFO"},
-                                                         {Config::CSDKLogLocationKey, "./c_sdk.log"}};
+    std::map<std::string, std::string> Config::config = {{Config::LicenseKey,               ""},
+                                                         {Config::AppNameKey,               ""},
+                                                         {Config::LogLevelKey,              "ALL"},
+                                                         {Config::SegmentCategoryKey,       "nginx"},
+                                                         {Config::TransactionFilterFileKey, "/etc/newrelic/nginxTransactionFilters.txt"},
+                                                         {Config::CSDKLogLevelKey,          "INFO"},
+                                                         {Config::CSDKLogLocationKey,       "./c_sdk.log"}};
 
     std::map<std::string, newrelic_loglevel_t> Config::newrelicLogLevels = {{"INFO",  NEWRELIC_LOG_INFO},
                                                                             {"DEBUG", NEWRELIC_LOG_DEBUG},
@@ -36,6 +39,9 @@ namespace newrelic {
                                                                {"CRITICAL", Log::LogLevels::FATAL},
                                                                {"ALL",      Log::LogLevels::ALL},
                                                                {"OFF",      Log::LogLevels::OFF}};
+
+    std::vector<std::regex> Config::skipExpressions;
+    std::vector<std::pair<std::regex, std::string>> Config::replaceExpressions;
 
     Log::LogLevels Config::getLogLevel() {
         return Config::logLevels[StringUtils::toUpper(Config::config[Config::LogLevelKey])];
@@ -55,7 +61,7 @@ namespace newrelic {
 
     std::string Config::getApplicationName() {
         auto appName = Config::config[Config::AppNameKey];
-        if (appName == "") {
+        if (appName.empty()) {
             const std::string Suffix{"-nginx"};
             std::string Hostname{"unknown"};
             char hostname[1024];
@@ -69,7 +75,7 @@ namespace newrelic {
     }
 
     std::string Config::getLicense() {
-        if (Config::config[Config::LicenseKey] == "") {
+        if (Config::config[Config::LicenseKey].empty()) {
             Log::fatal("Config::getLicense New Relic license key not configured");
         }
         return Config::config[Config::LicenseKey];
@@ -82,7 +88,7 @@ namespace newrelic {
         for (std::string line; std::getline(stream, line);) {
             // Deal with comments
             line = StringUtils::chomp(line, "#");
-            if (line == "") {
+            if (line.empty()) {
                 continue;
             }
 
@@ -98,6 +104,102 @@ namespace newrelic {
         for (std::pair<std::string, std::string> element : Config::config) {
             Log::debug("Config::init loaded key: {}  value: <{}>", element.first, element.second);
         }
+        processTransactionFilters();
         Log::trace("Config::init exit");
+    }
+
+    void Config::processTransactionFilters() {
+        // Read the entire regex config file as binary
+        try {
+            std::streampos size;
+            char *memblock;
+            std::ifstream file(Config::config[Config::TransactionFilterFileKey], std::ios::in | std::ios::binary | std::ios::ate);
+            if (file.is_open()) {
+                size = file.tellg();
+                memblock = new char[size];
+                file.seekg(0, std::ios::beg);
+                file.read(memblock, size);
+                file.close();
+                std::string line;
+                for (int i = 0; i < size; i++) {
+                    // See if we have a complete line
+                    if (memblock[i] == '\n') {
+                        // Get rid of comments
+                        Log::debug("Config::processTransactionFilters line: {}", line);
+                        line = StringUtils::chomp(line, "#");
+                        if (line.empty()) {
+                            line.clear();
+                            continue;
+                        }
+
+                        auto regexStart = line.find("regex:");
+                        if (regexStart == std::string::npos) {
+                            Log::error("Config::processTransactionFilters line must start with regex: Line: {}", line);
+                            line.clear();
+                            continue;
+                        }
+
+                        auto cmdStart = line.find(" replace:");
+                        if (cmdStart == std::string::npos) {
+                            cmdStart = line.find(" skip:");
+                            if (cmdStart == std::string::npos) {
+                                Log::error("Config::processTransactionFilters line must valid command- replace: or skip: Line: {}", line);
+                                line.clear();
+                                continue;
+                            }
+
+                            // Process skip:
+                            auto regex = line.substr(6, (cmdStart - 6));
+                            try {
+                                skipExpressions.emplace_back(std::regex{regex});
+                                Log::debug("Config::processTransactionFilters regex: {} skip:", regex);
+                            } catch (std::regex_error &e) {
+                                Log::error("Config::processTransactionFilters error compiling regex. regex: {} skip:", regex);
+                            }
+                            Log::debug("Config::processTransactionFilters regex: {} skip:", regex);
+                        } else {
+                            // Process replace:
+                            auto regex = line.substr(6, (cmdStart - 6));
+                            auto replace = line.substr(cmdStart + 9, line.length() - cmdStart - 8);
+                            try {
+                                auto value = std::pair<std::regex, std::string>{std::regex{regex}, replace};
+                                replaceExpressions.emplace_back(value);
+                                Log::debug("Config::processTransactionFilters regex: {} replace: {}", regex, replace);
+                            } catch (std::regex_error &e) {
+                                Log::error("Config::processTransactionFilters error compiling regex. regex: {} replace: {}", regex, replace);
+                            }
+                        }
+                        line.clear();
+                    } else {
+                        // Build-up a line
+                        line.append(1, memblock[i]);
+                    }
+                }
+                delete[] memblock;
+            }
+        } catch (...) {
+            std::exception_ptr p = std::current_exception();
+            Log::error("Config::processTransactionFilters exception: {}", p.__cxa_exception_type()->name());
+        }
+    }
+
+    bool Config::skipTransaction(std::string txn){
+        std::smatch match;
+        for(const auto& regex : skipExpressions){
+            if(std::regex_match(txn, match, regex)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    std::string Config::filterTransaction(std::string txn) {
+        std::smatch match;
+        for(const auto& pair : replaceExpressions){
+           if(std::regex_search(txn, match, pair.first)){
+               return std::regex_replace(txn, pair.first, pair.second);
+           }
+        }
+        return txn;
     }
 }

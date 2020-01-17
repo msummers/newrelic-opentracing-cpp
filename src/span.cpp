@@ -1,6 +1,10 @@
 #include <iostream>
+#include <sstream>
 #include "span.h"
 #include "config.h"
+//#include <nlohmann/json.hpp>
+
+//using json = nlohmann::json;
 
 namespace newrelic {
     const std::string Span::DummySpan{"dummySpan"};
@@ -21,7 +25,7 @@ namespace newrelic {
             Log::debug("({}) Span::Span options.references.size(): {}", (void *) this, options.references.size());
             auto referenceContext = findSpanContext(options.references);
             // Process Root Span
-            if(referenceContext->isRoot && !referenceContext->isUsed){
+            if (referenceContext->isRoot && !referenceContext->isUsed) {
                 referenceContext->isUsed = true;
                 // DIRE WARNING don't set anything in the SpanContext until *AFTER* the assignment!
                 this->newrelicSpanContext = *referenceContext;
@@ -39,11 +43,12 @@ namespace newrelic {
                 Log::debug("({}) Span::Span is child span", (void *) this);
                 newrelicTxn = referenceContext->span->newrelicTxn;
             } else {
-                Log::warn("({}) Span: referenceContext->isRoot: {} referenceContext->isUsed: {}", (void *) this,referenceContext->isRoot,referenceContext->isUsed );
+                Log::warn("({}) Span: referenceContext->isRoot: {} referenceContext->isUsed: {}", (void *) this, referenceContext->isRoot, referenceContext->isUsed);
             }
             Log::debug("({}) Span::Span newrelicTxn: {}", (void *) this, (void *) newrelicTxn);
 
-            std::string segmentName{operationName};
+            // Apply the same Transaction name filter to the segment name
+            std::string segmentName{Config::filterTransaction(operationName)};
             std::replace(segmentName.begin(), segmentName.end(), '/', ' ');
             newrelicSegment = newrelic_start_segment(newrelicTxn, segmentName.c_str(), Config::getSegmentCategory().c_str());
             Log::debug("({}) Span::Span newrelicSegment: {}", (void *) this, (void *) newrelicSegment);
@@ -63,7 +68,19 @@ namespace newrelic {
     void Span::FinishWithOptions(const opentracing::FinishSpanOptions &finish_span_options) noexcept {
         Log::trace("({}) Span::FinishWithOptions", (void *) this);
 
-        Log::debug("({}) Span::FinishWithOptions", (void *) this);
+        // Convert the Span associated with the Context to External. This requires a C-SDK change.
+        if ( this->newrelicTxn != nullptr && this->newrelicSegment != nullptr) {
+            std::string uri{tags["http.url"]};
+            if(!Config::skipTransaction(uri)) {
+                uri = Config::filterTransaction(uri);
+                Log::debug("({}) Span::FinishWithOptions set segment external", (const void *) this);
+                std::string procedure{tags["http.method"]};
+                std::string library;
+                newrelic_external_segment_params_t params = {const_cast<char *>(uri.c_str()), const_cast<char *>(procedure.c_str()), const_cast<char *>(library.c_str())};
+                newrelic_set_segment_external(this->newrelicTxn, this->newrelicSegment, &params);
+            }
+        }
+
         if (newrelicSegment != nullptr) {
             Log::debug("({}) Span::FinishWithOptions ending segment: {}", (void *) this, (void *) newrelicSegment);
             newrelic_end_segment(newrelicTxn, &newrelicSegment);
@@ -78,8 +95,134 @@ namespace newrelic {
         Log::trace("({}) Span::SetOperationName name: {}", (void *) this, name.data());
     }
 
+    namespace {
+        // Visits and serializes an arbitrarily-nested variant type. Serialisation of value types is to
+        // string while any composite types are expressed in JSON. eg. string("fred") -> "fred"
+        // vector<string>{"felicity"} -> "[\"felicity\"]"
+        struct VariantVisitor {
+            // Populated with the final result.
+            std::string &result;
+
+            explicit VariantVisitor(std::string &result_) : result(result_) {}
+
+        private:
+            // Only set if VariantVisitor is recursing. Unfortunately we only really need an explicit
+            // distinction (and all the conditionals below) to avoid the case of a simple string being
+            // serialized to "\"string\"" - which is valid JSON but very silly never-the-less.
+            //json *json_result = nullptr;
+            std::string *json_result = nullptr;
+            //            VariantVisitor(std::string &result_, json *json_result_)
+            //                    : result(result_), json_result(json_result_) {}
+
+        public:
+            void operator()(bool value) const {
+                if (json_result != nullptr) {
+                    *json_result = value;
+                } else {
+                    result = value ? "true" : "false";
+                }
+            }
+
+            void operator()(double value) const {
+                if (json_result != nullptr) {
+                    *json_result = value;
+                } else {
+                    result = std::to_string(value);
+                }
+            }
+
+            void operator()(int64_t value) const {
+                if (json_result != nullptr) {
+                    *json_result = value;
+                } else {
+                    result = std::to_string(value);
+                }
+            }
+
+            void operator()(uint64_t value) const {
+                if (json_result != nullptr) {
+                    *json_result = value;
+                } else {
+                    result = std::to_string(value);
+                }
+            }
+
+            void operator()(const std::string &value) const {
+                if (json_result != nullptr) {
+                    *json_result = value;
+                } else {
+                    result = value;
+                }
+            }
+
+            void operator()(std::nullptr_t) const {
+                if (json_result != nullptr) {
+                    *json_result = "nullptr";
+                } else {
+                    result = "nullptr";
+                }
+            }
+
+            void operator()(const char *value) const {
+                if (json_result != nullptr) {
+                    *json_result = value;
+                } else {
+                    result = std::string(value);
+                }
+            }
+
+            void operator()(const std::vector<opentracing::Value> &values) const {
+                result = "Vector unsupported";
+            }
+
+            //            void operator()(const std::vector<opentracing::Value> &values) const {
+            //                json list;
+            //                for (auto value : values) {
+            //                    json inner;
+            //                    std::string r;
+            //                    apply_visitor(VariantVisitor{r, &inner}, value);
+            //                    list.push_back(inner);
+            //                }
+            //                if (json_result != nullptr) {
+            //                    // We're a list in a dict/list.
+            //                    *json_result = list;
+            //                } else {
+            //                    // We're a root object, so dump the string.
+            //                    result = list.dump();
+            //                }
+            //            }
+            //
+            void operator()(const std::unordered_map<std::string, opentracing::Value> &value) const {
+                result = "Map unsupported";
+            }
+            //            void operator()(const std::unordered_map<std::string, opentracing::Value> &value) const {
+            //                json dict;
+            //                for (auto pair : value) {
+            //                    json inner;
+            //                    std::string r;
+            //                    apply_visitor(VariantVisitor{r, &inner}, pair.second);
+            //                    dict[pair.first] = inner;
+            //                }
+            //                if (json_result != nullptr) {
+            //                    // We're a dict in a dict/list.
+            //                    *json_result = dict;
+            //                } else {
+            //                    // We're a root object, so dump the string.
+            //                    result = dict.dump();
+            //                }
+            //            }
+        };
+    }  // namespace
+
     void Span::SetTag(opentracing::string_view key, const opentracing::Value &value) noexcept {
-        Log::trace("({}) Span::SetTag key: {}", (void *) this, key.data());
+        std::string result;
+        apply_visitor(VariantVisitor{result}, value);
+        auto safeKey = std::string{key};
+        tags[safeKey] = result;
+        if(this->newrelicSegment != nullptr && this->newrelicTxn != nullptr) {
+            newrelic_add_attribute_string(this->newrelicTxn, safeKey.c_str(), result.c_str());
+        }
+        Log::trace("({}) Span::SetTag key: {} value: {}", (void *) this, safeKey, result);
     }
 
     void Span::SetBaggageItem(opentracing::string_view restricted_key, opentracing::string_view value) noexcept {

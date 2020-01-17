@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <newrelic/libnewrelic.h>
+#include <regex>
 #include "log.h"
 
 namespace newrelic {
@@ -20,6 +21,8 @@ namespace newrelic {
         static newrelic_loglevel_t getCSDKLogLevel();
         static std::string getCSDKLogLocation();
         static std::string getSegmentCategory();
+        static bool skipTransaction(std::string txn);
+        static std::string filterTransaction(std::string txn);
     private:
         static std::map<std::string, std::string> config;
         static std::map<std::string, Log::LogLevels> logLevels;
@@ -30,6 +33,12 @@ namespace newrelic {
         static const std::string SegmentCategoryKey;
         static const std::string CSDKLogLocationKey;
         static const std::string CSDKLogLevelKey;
+        static const std::string TransactionFilterFileKey;
+        static std::vector<std::regex> skipExpressions;
+        static std::vector<std::pair<std::regex, std::string>> replaceExpressions;
+
+        static void processTransactionFilters();
+
     };
 }
 
