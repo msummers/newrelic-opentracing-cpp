@@ -79,8 +79,21 @@ logLevel: INFO                           # Default: INFO ()DEBUG | INFO | WARNIN
 segmentCategory: nginx                   # Default: nginx
 csdkLogLocation: ./c_sdk.log             # C-SDK log location. Default: ./c_sdk.log
 csdkLogLevel: NEWRELIC_LOG_INFO          # C-SDK log level (DEBUG | INFO | WARNING | ERROR). Default: INFO
+transactionFilterFile: /etc/newrelic/nginxTransactionFilters.txt # C++ regex filter file for NR Transaction naming
+```
+- `nginxTransactionFilters.txt` File of raw (unescaped) C++ regex patterns applied to URLs to help minimize Transaction name explosion
+```
+#
+# Nginx Tracer transaction filter file
+# regex:<regex> replace:<replacement>
+# regex:<regex> skip:
+regex:\/(*[0-9]+) replace:/{id} # This pattern replaces numeric ids preceeded by a forward slash with the string `{id}`
 ```
 ### Trouble shooting
+- `sudo systemctl status nginx`
+- `tail -f /var/log/nginx/error.log`
+- `sudo apport-retrace  -s /var/crash/<crash-file` (Note: you may have to add `Package: 0` to the crash file)
+  - `cmake -DCMAKE_BUILD_TYPE=Debug ..` to get more info in the crash
 
 ### Build the Tracer from Source
 - `git clone`
@@ -108,6 +121,7 @@ csdkLogLevel: NEWRELIC_LOG_INFO          # C-SDK log level (DEBUG | INFO | WARNI
 - ~~Add Tags to Transaction~~
 - ~~Set Transaction as External~~
 - ~~Regex filter Transaction names~~
+- What should Skip Transaction do?
 #### Long term
 - Modify C SDK to allow setting Span as External after it is created
   - Use this to set Span as External if `Tracer::Inject` is called

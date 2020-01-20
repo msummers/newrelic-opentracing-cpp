@@ -30,8 +30,10 @@ namespace newrelic {
                 // DIRE WARNING don't set anything in the SpanContext until *AFTER* the assignment!
                 this->newrelicSpanContext = *referenceContext;
                 this->newrelicSpanContext.span = this;
-                Log::debug("({}) Span::Span is root span", (void *) this);
-                newrelicTxn = newrelic_start_web_transaction(newrelicApp, operationName.c_str());
+                // TODO is Config::skipTransaction useful? If so what does it do?
+                auto txnName = Config::filterTransaction(operationName);
+                Log::debug("({}) Span::Span is root span. Transaction name: {}", (void *) this, txnName);
+                newrelicTxn = newrelic_start_web_transaction(newrelicApp, txnName.c_str());
                 //Add inbound payload if any
                 if (!this->newrelicSpanContext.payload.empty()) {
                     newrelic_accept_distributed_trace_payload_httpsafe(newrelicTxn, this->newrelicSpanContext.payload.c_str(), NEWRELIC_TRANSPORT_TYPE_HTTP);

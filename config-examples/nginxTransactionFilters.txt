@@ -1,0 +1,5 @@
+#
+# Nginx Tracer transaction filter file
+regex:<regex> replace:<replacement>
+regex:<regex> skip:
+regex:\/([\-a-z]*[0-9]+[\-a-z]*) replace:/{id}
