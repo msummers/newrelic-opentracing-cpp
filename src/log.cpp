@@ -15,7 +15,7 @@ namespace newrelic {
     void Log::fmtMessage(std::string format, fmt::format_args args) {
         try {
             fmt::vprint(stderr, format, args);
-        }catch(fmt::v6::format_error& e){
+        }catch(fmt::format_error& e){
             fmt::print(stderr, "[ERROR] fmt error: {} format: {}\n", e.what(), format);
         }
     }

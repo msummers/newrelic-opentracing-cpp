@@ -4,7 +4,7 @@
 
 #ifndef NR_OPENTRACING_CPP_LOG_H
 #define NR_OPENTRACING_CPP_LOG_H
-
+#define FMT_HEADER_ONLY
 #include "fmt/format.h"
 #include <iostream>
 

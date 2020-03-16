@@ -250,8 +250,20 @@ namespace newrelic {
         return *newrelicTracer;
     }
 
+//    void Span::Log(opentracing::SystemTime timestamp, const std::vector<std::pair<opentracing::string_view, opentracing::Value>> &fields) noexcept {
+//
+//    }
+//
+//    void Span::Log(opentracing::SystemTime timestamp, std::initializer_list<std::pair<opentracing::string_view, opentracing::Value>> fields) noexcept {
+//
+//    }
+
     void SpanContext::ForeachBaggageItem(std::function<bool(const std::string &key, const std::string &value)> f) const {
         Log::trace("({}) SpanContext::ForeachBaggageItem", (void *) this);
+    }
+
+    std::unique_ptr<opentracing::SpanContext> SpanContext::Clone() const noexcept {
+        return std::make_unique<SpanContext>(*this);
     }
 
     // TODO  #ifdef ABI v3

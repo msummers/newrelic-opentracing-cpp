@@ -22,6 +22,7 @@ include(ExternalProject)
 ExternalProject_Add(newrelic-c-sdk
         INSTALL_DIR ${PROJECT_SOURCE_DIR}/deps
         #file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/deps/include/newrelic)
+        #file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/deps/bin)
         #GIT_REPOSITORY https://github.com/newrelic/c-sdk.git
         #GIT_TAG v1.3.0
         GIT_REPOSITORY https://github.com/msummers-nr/c-sdk.git
@@ -34,22 +35,29 @@ ExternalProject_Add(newrelic-c-sdk
             cp newrelic-daemon ${PROJECT_SOURCE_DIR}/deps/bin/
         )
 
-ExternalProject_Add(opentracing-cpp
-        INSTALL_DIR ${PROJECT_SOURCE_DIR}/deps
-        GIT_REPOSITORY https://github.com/opentracing/opentracing-cpp
-        GIT_TAG v1.5.1
-        CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-        )
+#ExternalProject_Add(opentracing-cpp
+#        INSTALL_DIR ${PROJECT_SOURCE_DIR}/deps
+#        GIT_REPOSITORY https://github.com/opentracing/opentracing-cpp
+#        GIT_TAG v1.5.1
+#        CMAKE_ARGS
+#        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+#        -DBUILD_SHARED_LIBS:BOOL=OFF
+#        -DBUILD_STATIC_LIBS:BOOL=ON
+#        )
 
-ExternalProject_Add(fmt
-        INSTALL_DIR ${PROJECT_SOURCE_DIR}/deps
-        GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-        GIT_TAG 6.1.2
-        CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-        -DBUILD_SHARED_LIBS:BOOL=ON
-        )
+find_package(fmt PATHS /usr/local/lib/cmake)
+find_package(OpenTracing PATHS /usr/local/lib/cmake)
+#find_library(OpenTracing NAMES opentracing PATHS /usr/local/lib/cmake)
+
+#ExternalProject_Add(fmt
+#        INSTALL_DIR ${PROJECT_SOURCE_DIR}/deps
+#        GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+#        GIT_TAG 6.1.2
+#        CMAKE_ARGS
+#        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+#        -DBUILD_SHARED_LIBS:BOOL=OFF
+#        -DBUILD_STATIC_LIBS:BOOL=ON
+#        )
 
 #ExternalProject_Add(spdlog
 #        INSTALL_DIR ${PROJECT_SOURCE_DIR}/deps
@@ -74,12 +82,13 @@ file(GLOB_RECURSE NR_OPENTRACING_SOURCES "src/*.cpp")
 add_library(nr_opentracing SHARED ${NR_OPENTRACING_SOURCES} )
 
 # Dependencies
-add_dependencies(nr_opentracing newrelic-c-sdk opentracing-cpp fmt)
+#add_dependencies(nr_opentracing newrelic-c-sdk OpenTracing fmt)
+add_dependencies(nr_opentracing newrelic-c-sdk )
 
 # Link
 #file(GLOB_RECURSE ExternalLibs "deps/lib/libopentracing.so" "deps/lib/libnewrelic.a")
 set(ExternalLibs libopentracing libnewrelic libfmt)
 message(INFO " External libraries: ${ExternalLibs}")
 # TODO parameterize the absolute lib location
-target_link_libraries(nr_opentracing opentracing newrelic /home/mike/CLionProjects/nr-opentracing-cpp/deps/lib/libfmt.so -L/home/mike/CLionProjects/nr-opentracing-cpp/deps/lib)
-
+#target_link_libraries(nr_opentracing opentracing newrelic /home/mike/CLionProjects/nr-opentracing-cpp/deps/lib/libfmt.so -L/home/mike/CLionProjects/nr-opentracing-cpp/deps/lib)
+target_link_libraries(nr_opentracing opentracing newrelic -L/home/mike/CLionProjects/nr-opentracing-cpp/deps/lib)

@@ -28,6 +28,7 @@ namespace newrelic {
         bool isRoot{false};
         bool isUsed{false};
         std::string payload{""};
+        std::unique_ptr<opentracing::SpanContext> Clone() const noexcept;
     };
 
     class Span : public opentracing::Span, public std::enable_shared_from_this<Span> {
@@ -60,7 +61,6 @@ namespace newrelic {
 
         // Source: OpenTracing API for C++
         const opentracing::Tracer &tracer() const noexcept override;
-
         // TODO #ifdef ABI v3
         // Source: OpenTracing API for C++
         //void Log(opentracing::SystemTime timestamp, const std::vector<std::pair<opentracing::string_view, opentracing::Value>> &fields) noexcept override;
