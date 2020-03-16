@@ -11,7 +11,7 @@ _Note: this tracer utilizes the New Relic C-SDK which is an Agent and requires a
    - If there is no pre-built Nginx OpenTracing Release that matches your Nginx version you have to [build your own Nginx OpenTracing module](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source)
 3. Place `ngx_http_opentracing_module.so` in the Nginx module directory
    - On Ubuntu for instance, this is `/usr/lib/nginx/modules/`
-4. [Download the latest version of the New Relic Nginx OpenTracing Tracer](https://github.com/msummers/newrelic-opentracing-cpp/releases) `libnr_opentracing.so` and `libopentracing.so`
+4. [Download the latest version of the New Relic Nginx OpenTracing Tracer](https://github.com/msummers/newrelic-opentracing-cpp/releases) `libnr_opentracing.so`, `libopentracing.so`, and `newrelic-daemon`
 5. Place the downloaded libs anywhere you like
    - Update the linker cache with `sudo ldconfig <full_path_to_libopentracing.so>`
    - Verify `libnr_opentracing.so` with `ldd <full_path>/libnr_opentracing.so` you should see something similar to 
@@ -25,8 +25,10 @@ _Note: this tracer utilizes the New Relic C-SDK which is an Agent and requires a
    	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f0804e28000)
    	/lib64/ld-linux-x86-64.so.2 (0x00007f080633d000)
 ```
-which shows that ld can dynamically resolve `libopentracing`
-6. C-SDK daemon
+which shows that ld can dynamically resolve `libopentracing` 
+
+6. C-SDK Daemon
+Either add the C-SDK Daemon to the Nginx init script or create a new init script to start the Daemon. It does not matter where the Daemon is installed, it is a standalone executable.
 
 ### Configuration
 #### nginx
