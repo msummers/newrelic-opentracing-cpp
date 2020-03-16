@@ -25,7 +25,7 @@ _Note: this tracer utilizes the New Relic C-SDK which is an Agent and requires a
    	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f0804e28000)
    	/lib64/ld-linux-x86-64.so.2 (0x00007f080633d000)
 ```
-   - which shows that ld can dynamically resolve `libopentracing` 
+   which shows that ld can dynamically resolve `libopentracing` 
 
 6. C-SDK Daemon
    - Either add the C-SDK Daemon to the Nginx init script or create a new init script to start the Daemon. It does not matter where the Daemon is installed, it is a standalone executable.
