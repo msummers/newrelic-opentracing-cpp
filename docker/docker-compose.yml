@@ -1,0 +1,15 @@
+version: '2.4'
+
+services:
+  nginx:
+    image: nginx:1.17.3-newrelic
+    depends_on:
+      - "daemon"
+    environment:
+      NEW_RELIC_DAEMON_ADDRESS: "daemon:31339"
+    ports:
+      - "80:80"
+  daemon:
+    image: newrelic/c-daemon
+    ports:
+      - "31339:31339"

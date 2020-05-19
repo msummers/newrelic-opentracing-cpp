@@ -1,0 +1,6 @@
+./InstallInDocker.sh nginx:1.17.3 downloaded
+docker-compose up -d
+sudo docker ps
+sudo docker logs <containerID>
+sudo docker stop <containerID>
+

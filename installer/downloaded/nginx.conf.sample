@@ -1,0 +1,72 @@
+#
+# *SAMPLE* NGINX conf file
+#
+
+#
+# Start load_module config
+#
+load_module modules/ngx_http_opentracing_module.so;
+#
+# End load_module config
+#
+
+user  nginx;
+worker_processes  1;
+error_log  /var/log/nginx/error.log debug;
+pid        /var/run/nginx.pid;
+working_directory  /tmp/;
+worker_rlimit_core 500M;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+
+#
+# Start New Relic Tracer config
+#
+	opentracing_load_tracer /usr/local/lib/libnr_opentracing.so  /etc/newrelic/nr-opentracing-config.conf;
+	opentracing on;
+	opentracing_operation_name $uri;
+	opentracing_propagate_context;
+#
+# End New Relic Tracer config
+#
+
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+    access_log  /var/log/nginx/access.log  main;
+    sendfile        on;
+    keepalive_timeout  65;
+    log_subrequest on;
+
+#
+# Start of upstream Sample
+#
+# Sample of how to hook-up a back-end to get Traces out for testing or a demo
+#
+# Configured for backend listening on 8000, ala "busybox httpd -f -p 8000"
+#
+    upstream backend {
+      server localhost:8000;
+    }
+
+server {
+        listen 80;
+        listen [::]:80;
+
+        server_name nginx.with.nr.tracer;
+
+        location / {
+             proxy_pass http://backend/;
+        }
+}
+#
+# End upstream Sample
+#
+
+}
