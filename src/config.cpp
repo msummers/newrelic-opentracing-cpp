@@ -10,6 +10,8 @@
 #include <fstream>
 
 namespace newrelic {
+    // TODO let envvars override. Default - config file - envvars
+
     const std::string Config::LicenseKey{"newrelicLicense"};
     const std::string Config::AppNameKey{"applicationName"};
     const std::string Config::LogLevelKey{"logLevel"};
@@ -17,6 +19,8 @@ namespace newrelic {
     const std::string Config::CSDKLogLocationKey{"csdkLogLocation"};
     const std::string Config::CSDKLogLevelKey{"csdkLogLevel"};
     const std::string Config::TransactionFilterFileKey{"transactionFilterFile"};
+    const std::string Config::DaemonAddress{"daemonAddress"};
+    const std::string Config::DaemonTimeout{"daemonTimeout"};
 
     std::map<std::string, std::string> Config::config = {{Config::LicenseKey,               ""},
                                                          {Config::AppNameKey,               ""},
@@ -24,6 +28,8 @@ namespace newrelic {
                                                          {Config::SegmentCategoryKey,       "nginx"},
                                                          {Config::TransactionFilterFileKey, "/etc/newrelic/nginxTransactionFilters.txt"},
                                                          {Config::CSDKLogLevelKey,          "INFO"},
+                                                         {Config::DaemonAddress,            "/tmp/.newrelic.sock"},
+                                                         {Config::DaemonTimeout,            "0"},
                                                          {Config::CSDKLogLocationKey,       "./c_sdk.log"}};
 
     std::map<std::string, newrelic_loglevel_t> Config::newrelicLogLevels = {{"INFO",  NEWRELIC_LOG_INFO},
@@ -92,7 +98,7 @@ namespace newrelic {
                 continue;
             }
 
-            auto words = StringUtils::split(line, ':');
+            auto words = StringUtils::split(line, '=');
             Log::debug("Config::init loading key: {} value: {}", words.front(), words.back());
             // Key is in the conf file
             if (Config::config.count(words.front()) > 0) {
@@ -183,10 +189,10 @@ namespace newrelic {
         }
     }
 
-    bool Config::skipTransaction(std::string txn){
+    bool Config::skipTransaction(std::string txn) {
         std::smatch match;
-        for(const auto& regex : skipExpressions){
-            if(std::regex_match(txn, match, regex)){
+        for (const auto &regex : skipExpressions) {
+            if (std::regex_match(txn, match, regex)) {
                 return true;
             }
         }
@@ -195,11 +201,26 @@ namespace newrelic {
 
     std::string Config::filterTransaction(std::string txn) {
         std::smatch match;
-        for(const auto& pair : replaceExpressions){
-           if(std::regex_search(txn, match, pair.first)){
-               return std::regex_replace(txn, pair.first, pair.second);
-           }
+        for (const auto &pair : replaceExpressions) {
+            if (std::regex_search(txn, match, pair.first)) {
+                return std::regex_replace(txn, pair.first, pair.second);
+            }
         }
         return txn;
+    }
+
+    const char *Config::getDaemonSocket() {
+        Log::debug("getDaemonSocket: {}", Config::config[Config::DaemonAddress]);
+        return Config::config[Config::DaemonAddress].c_str();
+    }
+
+    int Config::getConnectionTimeout() {
+        Log::debug("getConnectionTimeout: {}", Config::config[Config::DaemonTimeout]);
+        try {
+            return std::stoi(Config::config[Config::DaemonTimeout]);
+        } catch (...) {
+            Log::warn("Config::getConnectionTimeout invalid daemonTimeout value {} using 0.", Config::config[Config::DaemonTimeout]);
+        }
+        return 0;
     }
 }

@@ -23,6 +23,11 @@ namespace newrelic {
         static std::string getSegmentCategory();
         static bool skipTransaction(std::string txn);
         static std::string filterTransaction(std::string txn);
+
+        static const char *getDaemonSocket();
+
+        static int getConnectionTimeout();
+
     private:
         static std::map<std::string, std::string> config;
         static std::map<std::string, Log::LogLevels> logLevels;
@@ -39,6 +44,8 @@ namespace newrelic {
 
         static void processTransactionFilters();
 
+        static const std::string DaemonAddress;
+        static const std::string DaemonTimeout;
     };
 }
 

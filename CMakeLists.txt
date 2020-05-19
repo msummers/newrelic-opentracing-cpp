@@ -8,7 +8,7 @@ set(CMAKE_INCLUDE_PATH deps/include)
 include_directories(SYSTEM deps/include include)
 
 # Libraries
-set(CMAKE_LIBRARY_PATH deps/lib)
+#set(CMAKE_LIBRARY_PATH /usr/local/lib;deps/lib)
 set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} "-export-dynamic")
 option(BUILD_SHARED_LIBS "" ON)
 
@@ -41,8 +41,8 @@ ExternalProject_Add(newrelic-c-sdk
 #        GIT_TAG v1.5.1
 #        CMAKE_ARGS
 #        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-#        -DBUILD_SHARED_LIBS:BOOL=OFF
-#        -DBUILD_STATIC_LIBS:BOOL=ON
+#        -DBUILD_SHARED_LIBS:BOOL=ON
+#        -DBUILD_STATIC_LIBS:BOOL=OFF
 #        )
 
 find_package(fmt PATHS /usr/local/lib/cmake)
@@ -91,4 +91,4 @@ set(ExternalLibs libopentracing libnewrelic libfmt)
 message(INFO " External libraries: ${ExternalLibs}")
 # TODO parameterize the absolute lib location
 #target_link_libraries(nr_opentracing opentracing newrelic /home/mike/CLionProjects/nr-opentracing-cpp/deps/lib/libfmt.so -L/home/mike/CLionProjects/nr-opentracing-cpp/deps/lib)
-target_link_libraries(nr_opentracing opentracing newrelic -L/home/mike/CLionProjects/nr-opentracing-cpp/deps/lib)
+target_link_libraries(nr_opentracing -lopentracing libnewrelic.a -L/home/mike/CLionProjects/nr-opentracing-cpp/deps/lib -L/usr/local/lib)
