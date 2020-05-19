@@ -12,4 +12,4 @@ services:
   daemon:
     image: newrelic/c-daemon
     ports:
-      - "31339:31339"
+      - "31339:31339" # Tell the Daemon to listen on host port 31339 and map it to the 31339 in the container

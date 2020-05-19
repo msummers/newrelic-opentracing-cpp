@@ -7,12 +7,13 @@
 #      downloaded_directory: the directory where the files downloaded from the GHE Release are located. Default is  ./downloaded
 #
 # What's meant by "opinionated"?
-# All files other than ngx_http_opentracing_module.so go in /etc/newrelic. This means your conf files have to be written to use /etc/newrelic.
+# 1. Config files go in /etc/newrelic except for nginx.conf. This means your conf files have to be written to use /etc/newrelic.
+# 2. Libs go in /usr/local/lib
 # If you don't like this you have to change this script, it's not configurable.
 #
 # Required files
-# libnr_opentracing.so             copied to /etc/newrelic in the image
-# libopentracing.so                copied to /etc/newrelic in the image
+# libnr_opentracing.so             copied to /usr/local/lib in the image
+# libopentracing.so                copied to /usr/local/lib in the image
 # newrelic-daemon                  copied to /etc/newrelic in the image
 # nginx.conf                       copied to the NGINX conf dir in the image
 # nginxTransactionFilters.txt      copied to /etc/newrelic in the image
