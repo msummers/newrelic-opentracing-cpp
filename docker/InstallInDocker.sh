@@ -2,10 +2,13 @@
 #
 # An opinionated script that sets-up a NGINX Docker Image with the New Relic Open Tracing Tracer.
 #
-# Use: ./InstallInDocker.sh <NGINX_Image_ID> <downloaded_directory>
-#      NGINX_Image_ID:       the Docker Image ID that includes your NGINX
-#      downloaded_directory: the directory where the files downloaded from the GHE Release are located. Default is  ./downloaded
-#
+# USE
+# 1. Start Docker
+# 2. Get the C-SDK Daemon: docker pull newrelic/c-daemon
+# 3. Get a compatible version of NGINX: docker pull nginx:1.17.3
+# 4. Run the installer: ./InstallInDocker.sh nginx:1.17.3 downloaded
+# 5. Start everything: docker-compose up -d
+
 # What's meant by "opinionated"?
 # 1. Config files go in /etc/newrelic except for nginx.conf. This means your conf files have to be written to use /etc/newrelic.
 # 2. Libs go in /usr/local/lib

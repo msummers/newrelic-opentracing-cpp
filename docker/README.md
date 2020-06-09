@@ -7,6 +7,13 @@ Here are some _guidelines_ for using the plugin with Docker. Your mileage can an
 3. `downloaded/conf.d` is _optional_
 4. _*READ `InstallInDocker.sh` BEFORE YOU START*_
 
+## Use
+1. Start Docker
+2. docker pull newrelic/c-daemon                # Get the C SDK daemon image
+3. docker run -d newrelic/c-daemon              # Run the daemon
+4. docker pull nginx:1.17.3                     # Get NGINX
+5. ./InstallInDocker.sh nginx:1.17.3 downloaded # Run the installer
+
 ## Useful Docker commands
 - `sudo docker run  -it <Image>     <Bash command> # Get a bash command line in the image`
 - `sudo docker exec -it <Container> <Bash command> # Get a bash command line in the container`
